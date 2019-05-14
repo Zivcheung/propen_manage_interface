@@ -10,6 +10,8 @@
               :data="projectInfo"
               :file-list="imageList"
               :on-success="illustrationUploadSucessHandler"
+              :on-remove="illustrationRemoveHandler"
+              :before-upload="illustrationValidateHandler"
               drag
               multiple>
               <i class="fas fa-image"></i>
@@ -42,7 +44,11 @@
               :action="`http://localhost:3000/REST/manageSite/workflow/contentVoiceover`"
               :data="projectInfo"
               :on-success="voiceoverUploadSuccessHandler"
+              :on-remove="voiceoverUploadRemove"
+              :before-upload="audioValidationHandler"
               :file-list="voiceoverOfPage"
+              :limit="1"
+              :on-exceed="voiceoverExceed"
               drag>
               <i class="fas fa-music"></i>
               <span>upload your cover image here</span>
@@ -57,6 +63,7 @@
         text-color="#fff"
         active-text-color="#0075ff"
         background-color="#262626"
+        :collapse-transition="false"
         >
         <el-submenu v-for="(section, i) in orgnizedPages"
           :key="section[0].sectionName"
@@ -113,7 +120,7 @@ export default {
   data() {
     return {
       pageNumber: 0,
-      tocCollapse: false,
+      tocCollapse: true,
       toc: [],
       renameValue: '',
       currentPage: {
@@ -181,6 +188,9 @@ export default {
       'addPage',
       'removePage',
     ]),
+    ...mapActions('workflow', [
+      'deleteAddedIllustration',
+    ]),
     findCurrentPage() {
       const page = this.currentProject.pages.find(p => p.pageId === this.currentPage.pageId);
       return page;
@@ -199,7 +209,7 @@ export default {
     deletePageHandler(pageId, section) {
       if (section.length === 1) {
         // todo: remove section
-        return 0;
+        return;
       }
       const deleteIndex = section.findIndex(item => item.pageId === pageId);
       this.removePage(pageId);
@@ -212,11 +222,6 @@ export default {
         this.currentPage.pageId = section[deleteIndex - 1].pageId;
       }
     },
-    // renameDblHandler(e, i) {
-    //   this.toc[i] || this.$set(this.toc, i, {});
-    //   this.$set(this.toc[i].editable);
-    //   console.log(1);
-    // },
     renameSectionHandler(e) {
       this.renameValue = e.target.innerText;
     },
@@ -250,13 +255,56 @@ export default {
       this.currentPage.sectionName = p.sectionName;
     },
     // image ajax area
+    illustrationValidateHandler(file) {
+      const name = file.name;
+      const page = this.findCurrentPage();
+      const dupName = page.illustrations.some(item => item.name === name);
+      if (dupName) {
+        alert('please not upload the same file');
+        return false;
+      }
+      return true;
+    },
+    audioValidationHandler(file) {
+      const maxSize = 100 * 1024 * 1024; // 100mb
+      if (file.type !== 'audio/mp3' && file.type !== 'audio/x-m4a') {
+        alert('only accept mp3 and m4a audio format');
+        return false;
+      }
+      if (file.size > maxSize) {
+        alert('max 100mb size limt exceed');
+        return false;
+      }
+      return true;
+    },
     illustrationUploadSucessHandler(res, file) {
       const payload = {
         pageId: this.currentPage.pageId,
         name: file.name,
         url: res.url,
+        s3Key: res.s3Key,
       };
       this.addIllustration(payload);
+    },
+    illustrationRemoveHandler(file) {
+      if (file.status !== 'success') return;
+      // delete in page reference
+      this.deleteAddedIllustration({
+        name: file.name,
+        pageId: this.currentPage.pageId,
+        type: 'Illustration',
+      });
+    },
+    voiceoverUploadRemove(file) {
+      if (file.status !== 'success') return;
+      this.deleteAddedIllustration({
+        type: 'Voiceover',
+        name: file.name,
+        pageId: this.currentPage.pageId,
+      });
+    },
+    voiceoverExceed() {
+      alert('please first delete then upload voiceover');
     },
     voiceoverUploadSuccessHandler(res, file) {
       const payload = {
@@ -264,9 +312,7 @@ export default {
         name: file.name,
         url: res.url,
       };
-      console.log(payload);
       this.addContentVoiceover(payload);
-      console.log(this.findCurrentPage());
     },
   },
   created() {

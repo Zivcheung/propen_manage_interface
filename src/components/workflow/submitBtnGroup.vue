@@ -1,7 +1,8 @@
 <template>
-  <div class="wkSubmitBtnGrout">
-    <el-button @click="$emit('confirm')" type="primary">Confirm</el-button>
-    <el-button @click="cancelClickHandler" type="danger">Cancel</el-button>
+  <div class="submit-btn-group">
+    <el-button @click="$emit('save')" type="primary">Save</el-button>
+    <el-button @click="$emit('nextStage')" type="primary">Next Stage</el-button>
+    <el-button @click="cancelClickHandler" type="danger">Abort</el-button>
   </div>
 </template>
 
@@ -17,6 +18,4 @@ export default {
 };
 </script>
 
-<style>
-
-</style>
+<style src="@/submit-btn-group.css"></style>

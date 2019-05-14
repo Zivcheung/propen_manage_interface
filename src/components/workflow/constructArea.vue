@@ -1,5 +1,5 @@
 <template>
-  <section class="construct-area">
+  <section class="construct-area fit-parent-wp">
     <div class="construct-area__tab-group">
       <div class="construct-area__tab" @click="activeTagHandler(0)"
         :class="{'construct-area__tab--active': currentTab===0}">

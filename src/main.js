@@ -7,7 +7,7 @@ import 'simplebar/dist/simplebar.css';
 import observer from 'src/utils/observer';
 import Vue from 'vue';
 import store from 'src/store';
-import axios from 'axios';
+import mainAxios from 'src/utils/mainAxios';
 import lang from 'element-ui/lib/locale/lang/en';
 import locale from 'element-ui/lib/locale';
 import 'element-ui/lib/theme-chalk/index.css';
@@ -25,10 +25,7 @@ Vue.use(elementUI);
 Vue.prototype.$$observer = observer;
 
 // inject global ajax plugin
-const baseURL = process.env === 'production' ? 'todo' : 'http://localhost:3000/REST/manageSite/';
-Vue.prototype.$$axios = axios.create({
-  baseURL,
-});
+Vue.prototype.$$axios = mainAxios;
 
 /* eslint-disable no-new */
 new Vue({

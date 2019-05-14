@@ -1,12 +1,14 @@
 import uuid from 'uuid';
+import axios from 'src/utils/mainAxios';
+import { capitalize } from 'src/utils/utils';
 
 const state = {
+  currentProjectId: '',
   currentProject: {
-    title: 'test',
+    title: '',
     currentStage: '',
-    projectId: '',
     authors: [],
-    authorType: '',
+    authorType: 'team',
     coverImage: '',
     voiceOver: '',
     introduction: '',
@@ -26,17 +28,32 @@ const state = {
 };
 
 const mutations = {
+  // Unique identifier
   setProjectId(state, id) {
-    state.currentProject.ProjectId = id;
+    state.currentProjectId = id;
+  },
+  setStage(state, stage) {
+    state.currentProject.currentStage = stage;
   },
   setCreateStep(state, createData) {
     Object.assign(state, {
       ...createData,
     });
   },
+  // create stage
+  setTitle(state, title) {
+    state.currentProject.title = title;
+  },
+  setAuthors(state, authors) {
+    state.currentProject.authors = authors;
+  },
+  setAuthorType(state, type) {
+    state.currentProject.authorType = type;
+  },
   setIntroImage(state, imagePath) {
     state.coverImage = imagePath;
   },
+  // constructing stage
   setPageImageArray(state, opt) {
     const currentSection = opt.sectionName;
     const currentPage = opt.pageNumber;
@@ -62,22 +79,26 @@ const mutations = {
     const img = {
       url: payload.url,
       name: payload.name,
+      s3Key: payload.s3Key,
     };
     page.illustrations.push(img);
   },
   removeIllustration(state, payload) {
     const page = state.currentProject.pages.find(p => p.pageId === payload.pageId);
-    _.remove(page.illustrations, item => item.url === payload.url);
+    _.remove(page.illustrations, item => item.name === payload.name);
   },
   addContentVoiceover(state, payload) {
     const page = state.currentProject.pages.find(p => p.pageId === payload.pageId);
     const voiceover = payload.url
     page.voiceover = voiceover;
   },
+  removeVoiceover(state, payload) {
+    const page = state.currentProject.pages.find(p => p.pageId === payload.pageId);
+    page.voiceover = '';
+  },
   // convenient function to hand power to client
   callbackUpdate(state, cb) {
     cb(state);
-    console.log(state);
   },
   // change toc and also sync all its pages
   renameTOCSection(state, opt) {
@@ -171,6 +192,125 @@ const getters = {
 };
 
 const actions = {
+  saveCreateStage({ state, commit }) {
+    const currentProject = state.currentProject;
+    const data = {
+      projectId: state.currentProjectId,
+      title: currentProject.title,
+      currentStage: currentProject.currentStage || 'create',
+      authors: currentProject.authors,
+      authorType: currentProject.authorType,
+    };
+    // error handling should be handled in components
+    return axios.post('workflow/projectAndCreate', data)
+      .then((res) => {
+        commit('setProjectId', res.data.projectId);
+        return Promise.resolve(res);
+      });
+  },
+  saveConstructingStage(context) {
+    const currentProject = context.state.currentProject;
+    const constructingData = {
+      projectId: context.state.currentProjectId,
+      introduction: currentProject.introduction,
+      introVoice: currentProject.introVoice,
+      coverImage: currentProject.coverImage,
+      pages: currentProject.pages,
+      tableOfContent: currentProject.tableOfContent,
+    };
+    console.log(constructingData);
+    return axios.put('/workflow/constructContent', constructingData);
+  },
+  updateStageToNext({ state, commit, dispatch }) {
+    const stages = [
+      'create',
+      'material_collection',
+      'constructing',
+      'review',
+      'finish',
+      'completed',
+    ];
+    const currentStage = state.currentProject.currentStage;
+    const index = stages.indexOf(currentStage);
+
+    if (index >= 5) throw new Error('stage out of range');
+    commit('setStage', stages[index + 1]);
+    return axios.post('/workflow/updateStage', {
+      projectId: state.currentProjectId,
+      stage: state.currentProject.currentStage,
+    });
+  },
+  saveAndNextStage({ state, commit, dispatch }, _stage) {
+    if (!_stage) throw new Error('saveAndNextStage should receive a stage name param');
+    let stage;
+    switch (_stage) {
+      case 'create':
+        stage = 'CreateStage';
+        break;
+      case 'material collection':
+        stage = 'MaterialCollectionStage';
+        break;
+      case 'constructing':
+        stage = 'ConstructingStage';
+        break;
+      case 'review':
+        stage = 'ReviewStage';
+        break;
+      case 'finish':
+        stage = 'FinishStage';
+        break;
+      default:
+        throw new Error('saveAndNextStage accepts only suitable stage name');
+    }
+    async function run() {
+      if (!state.currentProjectId) {
+        // first init project by finishing create stage case
+        // set stage to materialcollectin then save
+        commit('setStage', 'material_collection');
+        await dispatch(`save${stage}`);
+      } else {
+        const p1 = dispatch(`save${stage}`);
+        const p2 = dispatch('updateStageToNext');
+        await p1;
+        await p2;
+      }
+    }
+    return run();
+  },
+  deleteAddedIllustration(context, payload) {
+    const page = context.state.currentProject.pages.find(item => item.pageId === payload.pageId);
+    let removedKey;
+    switch (payload.type) {
+      case 'Illustration':
+        removedKey = page.illustrations.find(item => item.name === payload.name).s3Key;
+        break;
+      case 'Voiceover':
+        removedKey = page.voiceover.replace(/^.*resources\//, '');
+        removedKey = decodeURIComponent(removedKey);
+        break;
+      case 'IntroImage':
+        // todo: need to write
+        break;
+      default:
+        removedKey = page.illustrations.find(item => item.name === payload.name).s3Key;
+    }
+    if (!removedKey) throw new Error();
+    // delete fileList ref
+    context.commit(`remove${payload.type}`, {
+      name: payload.name,
+      pageId: payload.pageId,
+    });
+    // delete remote Storage
+    axios.delete('workflow/contentUpload', {
+      params: {
+        key: encodeURIComponent(removedKey),
+      },
+    })
+      .catch((err) => {
+        console.log(err);
+        alert('file DeleteError please contact');
+      });
+  },
 };
 
 export default {

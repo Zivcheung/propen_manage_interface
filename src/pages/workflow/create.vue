@@ -2,26 +2,27 @@
   <div class="createpage">
     <topnav></topnav>
     <el-row>
-      <el-col>
+      <el-col :span="18" :offset="3">
         <step :active="0"></step>
       </el-col>
     </el-row>
     <el-row>
-      <el-col>
+      <el-col :span="4" :offset="3">
         <div class="createpage__input-cluster">
-          <el-form :model = "projectForm" label-position="top">
+          <el-form label-position="top">
             <el-form-item label="Project Name">
-              <el-input v-model="projectForm.title"></el-input>
+              <el-input v-model="x_title"></el-input>
             </el-form-item>
             <el-form-item label="Author Type">
-              <el-radio-group v-model="projectForm.authorType">
-                <el-radio label="solo">Solo</el-radio>
-                <el-radio label="team">Team</el-radio>
+              <el-radio-group v-model="x_authorType">
+                <el-radio label="solo" >Solo</el-radio>
+                <el-radio label="team" >Team</el-radio>
               </el-radio-group>
             </el-form-item>
             <el-form-item label="Author(s)">
-              <el-select v-model="projectForm.authors"
-                :multiple="projectForm.authorType === 'team'"
+              <el-select
+                v-model="x_authors"
+                :multiple="x_authorType == 'team'"
                 filterable
                 allow-create
                 default-first-option
@@ -32,7 +33,11 @@
         </div>
       </el-col>
     </el-row>
-    <submit-btn-group @confirm="submitAll"></submit-btn-group>
+    <el-row>
+      <el-col :span="20" :offset="1">
+        <submit-btn-group @save="saveHandler" @nextStage="saveAndNextHandler"></submit-btn-group>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -40,7 +45,7 @@
 import topnav from 'src/components/common/topnav';
 import step from 'src/components/workflow/step';
 import submitBtnGroup from 'src/components/workflow/submitBtnGroup';
-import { mapMutations } from 'vuex';
+import { mapState, mapMutations, mapActions } from 'vuex';
 
 export default {
   name: 'createPage',
@@ -51,27 +56,66 @@ export default {
   },
   data() {
     return {
-      projectForm: {
-        title: '',
-        authors: [],
-        authorType: 'solo',
-      },
     };
+  },
+  computed: {
+    ...mapState('workflow', [
+      'currentProject',
+    ]),
+    x_title: {
+      get() {
+        return this.currentProject.title;
+      },
+      set(value) {
+        this.setTitle(value);
+      },
+    },
+    x_authors: {
+      get() {
+        return this.currentProject.authors;
+      },
+      set(value) {
+        this.setAuthors(value);
+      },
+    },
+    x_authorType: {
+      get() {
+        return this.currentProject.authorType;
+      },
+      set(value) {
+        this.setAuthorType(value);
+      },
+    },
   },
   methods: {
     ...mapMutations('workflow', [
       'setProjectId',
+      'setTitle',
+      'setAuthors',
+      'setAuthorType',
     ]),
-    submitAll() {
-      const sendData = {
-        ...this.projectForm,
-      };
-      this.$$axios.post('workflow/projectAndCreate', sendData)
-        .then((res) => {
-          this.setProjectId('setProjectId', res.data.projectId);
+    ...mapActions('workflow', [
+      'saveCreateStage',
+      'saveAndNextStage',
+    ]),
+    saveHandler() {
+      console.log('saving create');
+      this.saveCreateStage()
+        .then(() => {
+          // loading
+          console.log('create is saved');
         })
-        .catch((err) => {
-          alert(err);
+        .catch(() => {
+          alert('saving failed');
+        });
+    },
+    saveAndNextHandler() {
+      this.saveAndNextStage('create')
+        .then(() => {
+          console.log('move to next stage');
+        })
+        .catch(() => {
+          alert('saving and stage updating failed');
         });
     },
   },
