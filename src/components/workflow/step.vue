@@ -1,5 +1,5 @@
 <template>
-  <el-steps :active='active'>
+  <el-steps :active='active' finish-status="success">
     <el-step title="Create"></el-step>
     <el-step title="Material Collection"></el-step>
     <el-step title="Constructing"></el-step>

@@ -10,7 +10,7 @@ const state = {
     authors: [],
     authorType: 'team',
     coverImage: '',
-    voiceOver: '',
+    introVoiceover: '',
     introduction: '',
     tableOfContent: [
     ],
@@ -28,6 +28,21 @@ const state = {
 };
 
 const mutations = {
+  resetProjectState(state) {
+    state.currentProjectId = '';
+    state.currentProject = {
+      title: '',
+      currentStage: '',
+      authors: [],
+      authorType: 'team',
+      coverImage: '',
+      voiceOver: '',
+      introduction: '',
+      tableOfContent: [
+      ],
+      pages: [],
+    };
+  },
   // Unique identifier
   setProjectId(state, id) {
     state.currentProjectId = id;
@@ -35,25 +50,29 @@ const mutations = {
   setStage(state, stage) {
     state.currentProject.currentStage = stage;
   },
-  setCreateStep(state, createData) {
-    Object.assign(state, {
-      ...createData,
-    });
-  },
   // create stage
   setTitle(state, title) {
     state.currentProject.title = title;
-  },
+  }, 
   setAuthors(state, authors) {
     state.currentProject.authors = authors;
   },
   setAuthorType(state, type) {
     state.currentProject.authorType = type;
   },
-  setIntroImage(state, imagePath) {
-    state.coverImage = imagePath;
-  },
   // constructing stage
+  setCoverImage(state, imagePath) {
+    state.currentProject.coverImage = imagePath;
+  },
+  removeCoverImage(state, imagePath) {
+    state.currentProject.coverImage = '';
+  },
+  setIntroVoiceover(state, audioPath) {
+    state.currentProject.introVoiceover = audioPath;
+  },
+  removeIntroVoiceover(state) {
+    state.currentProject.introVoiceover = '';
+  },
   setPageImageArray(state, opt) {
     const currentSection = opt.sectionName;
     const currentPage = opt.pageNumber;
@@ -178,6 +197,11 @@ const mutations = {
       return pages;
     });
   },
+  setConstructingStage(state, payload) {
+    Object.assign(state.currentProject, {
+      ...payload,
+    });
+  },
 };
 
 const getters = {
@@ -213,7 +237,7 @@ const actions = {
     const constructingData = {
       projectId: context.state.currentProjectId,
       introduction: currentProject.introduction,
-      introVoice: currentProject.introVoice,
+      introVoiceover: currentProject.introVoiceover,
       coverImage: currentProject.coverImage,
       pages: currentProject.pages,
       tableOfContent: currentProject.tableOfContent,
@@ -232,9 +256,10 @@ const actions = {
     ];
     const currentStage = state.currentProject.currentStage;
     const index = stages.indexOf(currentStage);
-
     if (index >= 5) throw new Error('stage out of range');
+    // update store
     commit('setStage', stages[index + 1]);
+    // update database
     return axios.post('/workflow/updateStage', {
       projectId: state.currentProjectId,
       stage: state.currentProject.currentStage,
@@ -277,8 +302,62 @@ const actions = {
     }
     return run();
   },
-  deleteAddedIllustration(context, payload) {
-    const page = context.state.currentProject.pages.find(item => item.pageId === payload.pageId);
+  setCreateStage({ commit }, payload) {
+    commit('setAuthorType', payload.authorType);
+    commit('setTitle', payload.title);
+    commit('setAuthors', payload.authors);
+    commit('setStage', payload.stage);
+  },
+  loadCreateStage(context) {
+    return axios.get('/workflow/createStage', {
+      params: {
+        projectId: context.state.currentProjectId,
+      },
+    })
+      .then((res) => {
+        const d = res.data;
+        context.dispatch('setCreateStage', d);
+      });
+  },
+  loadMaCollectionStage(context) {
+    return axios.get('/workflow/materialCollection', {
+      params: {
+        projectId: context.state.currentProjectId,
+      },
+    })
+      .then((res) => {
+        const d = res.data;
+        if (!d) return null;
+
+        return d.collectionList;
+      });
+  },
+  loadConstructingStage(context) {
+    return axios.get('/workflow/constructingStage', {
+      params: {
+        projectId: context.state.currentProjectId,
+      },
+    })
+      .then((res) => {
+        const d = res.data;
+        if (!res) return;
+        context.commit('setConstructingStage', d);
+      });
+  },
+  deleteAddedFile(context, payload) {
+    const currentProject = context.state.currentProject;
+    let page;
+    // condition to exclude intro page
+    if (payload.pageId) {
+      page = context.state.currentProject.pages.find(item => item.pageId === payload.pageId);
+      // delete fileList ref
+      context.commit(`remove${payload.type}`, {
+        name: payload.name,
+        pageId: payload.pageId,
+      });
+    } else {
+      context.commit(`remove${payload.type}`);
+    }
     let removedKey;
     switch (payload.type) {
       case 'Illustration':
@@ -288,18 +367,16 @@ const actions = {
         removedKey = page.voiceover.replace(/^.*resources\//, '');
         removedKey = decodeURIComponent(removedKey);
         break;
-      case 'IntroImage':
-        // todo: need to write
+      case 'CoverImage':
+        removedKey = currentProject.coverImage.replace(/^.*resources\//, '');
+        break;
+      case 'IntroVoiceover':
+        removedKey = currentProject.introVoiceover.replace(/^.*resources\//, '');
         break;
       default:
         removedKey = page.illustrations.find(item => item.name === payload.name).s3Key;
     }
     if (!removedKey) throw new Error();
-    // delete fileList ref
-    context.commit(`remove${payload.type}`, {
-      name: payload.name,
-      pageId: payload.pageId,
-    });
     // delete remote Storage
     axios.delete('workflow/contentUpload', {
       params: {

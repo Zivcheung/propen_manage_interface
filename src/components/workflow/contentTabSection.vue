@@ -39,20 +39,13 @@
         </div>
         <div>
           <div>Voice Over</div>
-            <el-upload
-              class="constructing-page__intro-upload constructing-page__intro-upload--flat"
-              :action="`http://localhost:3000/REST/manageSite/workflow/contentVoiceover`"
-              :data="projectInfo"
-              :on-success="voiceoverUploadSuccessHandler"
-              :on-remove="voiceoverUploadRemove"
-              :before-upload="audioValidationHandler"
-              :file-list="voiceoverOfPage"
-              :limit="1"
-              :on-exceed="voiceoverExceed"
-              drag>
-              <i class="fas fa-music"></i>
-              <span>upload your cover image here</span>
-            </el-upload>
+          <audio-uploader
+            :data="projectInfo"
+            :on-success="voiceoverUploadSuccessHandler"
+            :on-remove="voiceoverUploadRemove"
+            :file-list="voiceoverOfPage"
+            >
+          </audio-uploader>
         </div>
       </el-col>
     </el-row>
@@ -114,9 +107,13 @@
 
 <script>
 import { mapState, mapActions, mapMutations, mapGetters } from 'vuex';
+import audioUploader from './audioUploader';
 
 export default {
   name: 'wkContentTabSection',
+  components: {
+    audioUploader,
+  },
   data() {
     return {
       pageNumber: 0,
@@ -189,7 +186,7 @@ export default {
       'removePage',
     ]),
     ...mapActions('workflow', [
-      'deleteAddedIllustration',
+      'deleteAddedFile',
     ]),
     findCurrentPage() {
       const page = this.currentProject.pages.find(p => p.pageId === this.currentPage.pageId);
@@ -265,18 +262,6 @@ export default {
       }
       return true;
     },
-    audioValidationHandler(file) {
-      const maxSize = 100 * 1024 * 1024; // 100mb
-      if (file.type !== 'audio/mp3' && file.type !== 'audio/x-m4a') {
-        alert('only accept mp3 and m4a audio format');
-        return false;
-      }
-      if (file.size > maxSize) {
-        alert('max 100mb size limt exceed');
-        return false;
-      }
-      return true;
-    },
     illustrationUploadSucessHandler(res, file) {
       const payload = {
         pageId: this.currentPage.pageId,
@@ -289,7 +274,7 @@ export default {
     illustrationRemoveHandler(file) {
       if (file.status !== 'success') return;
       // delete in page reference
-      this.deleteAddedIllustration({
+      this.deleteAddedFile({
         name: file.name,
         pageId: this.currentPage.pageId,
         type: 'Illustration',
@@ -297,14 +282,11 @@ export default {
     },
     voiceoverUploadRemove(file) {
       if (file.status !== 'success') return;
-      this.deleteAddedIllustration({
+      this.deleteAddedFile({
         type: 'Voiceover',
         name: file.name,
         pageId: this.currentPage.pageId,
       });
-    },
-    voiceoverExceed() {
-      alert('please first delete then upload voiceover');
     },
     voiceoverUploadSuccessHandler(res, file) {
       const payload = {

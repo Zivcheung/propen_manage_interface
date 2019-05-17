@@ -22,7 +22,8 @@
             <el-form-item label="Author(s)">
               <el-select
                 v-model="x_authors"
-                :multiple="x_authorType == 'team'"
+                multiple
+                :multiple-limit="x_authorType == 'team' ? 20 : 1"
                 filterable
                 allow-create
                 default-first-option
@@ -35,7 +36,7 @@
     </el-row>
     <el-row>
       <el-col :span="20" :offset="1">
-        <submit-btn-group @save="saveHandler" @nextStage="saveAndNextHandler"></submit-btn-group>
+        <submit-btn-group @save="saveHandler" @next-stage="saveAndNextHandler"></submit-btn-group>
       </el-col>
     </el-row>
   </div>
@@ -113,11 +114,29 @@ export default {
       this.saveAndNextStage('create')
         .then(() => {
           console.log('move to next stage');
+          this.$router.push({
+            path: '/material_collection',
+          });
         })
         .catch(() => {
           alert('saving and stage updating failed');
         });
     },
+  },
+  watch: {
+    x_authorType() {
+      this.setAuthors([]);
+    },
+  },
+  mounted() {
+    const projectId = this.$store.state.workflow.currentProjectId;
+    // continous to work
+    if (projectId) {
+      this.$store.dispatch('workflow/loadCreateStage')
+        .catch(() => {
+          alert('load project failed');
+        });
+    }
   },
 };
 </script>
