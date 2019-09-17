@@ -3,7 +3,15 @@
     <el-row class="content-panel__form">
       <el-col :span="12" :offset="3">
         <div>
-          <div>Illustrations</div>
+          <div class="title">Page Name</div>
+            <el-input
+              placeholder="Name your page here"
+              v-model="pageName"
+              >
+            </el-input>
+        </div>
+        <div>
+          <div class="title">Illustrations</div>
             <el-upload
               class="constructing-page__intro-upload"
               :action="`http://localhost:3000/REST/manageSite/workflow/contentIllustration`"
@@ -25,7 +33,7 @@
       </el-col>
       <el-col :span="7" :offset="1">
         <div>
-          <div>Description</div>
+          <div class="title">Description</div>
             <el-input
               type="textarea"
               placeholder="write abstract here"
@@ -38,7 +46,7 @@
             </el-input>
         </div>
         <div>
-          <div>Voice Over</div>
+          <div class="title">Voice Over</div>
           <audio-uploader
             :data="projectInfo"
             :on-success="voiceoverUploadSuccessHandler"
@@ -154,6 +162,19 @@ export default {
           const page = state.currentProject.pages
             .find(p => p.pageId === this.currentPage.pageId);
           page.description = value;
+        });
+      },
+    },
+    pageName: {
+      get() {
+        return this.currentProject.pages
+          .find(page => page.pageId === this.currentPage.pageId).pageName;
+      },
+      set(value) {
+        this.callbackUpdate((state) => {
+          const page = state.currentProject.pages
+            .find(p => p.pageId === this.currentPage.pageId);
+          page.pageName = value;
         });
       },
     },

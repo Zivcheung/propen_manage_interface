@@ -1,18 +1,33 @@
 <template>
   <div class="window-page-wp">
     <topnav></topnav>
-    <el-row>
-      <el-col :span="18" :offset="3">
-        <step
-          :active="3"></step>
-      </el-col>
-    </el-row>
-    <el-row>
-      <el-col :span="10" :offset="11">
-        <button-group
-          @next-stage="nextStageHandler"></button-group>
-      </el-col>
-    </el-row>
+    <div class="width-wp">
+      <el-row class="breadcrumb">
+        <el-col :span="18" :offset="3">
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item>Curation</el-breadcrumb-item>
+            <el-breadcrumb-item>Constructing</el-breadcrumb-item>
+          </el-breadcrumb>
+        </el-col>
+      </el-row>
+      <el-row class="curation-step">
+        <el-col :span="18" :offset="3">
+          <step
+            :active="3"></step>
+        </el-col>
+      </el-row>
+      <el-row class="review-placeholder">
+        <el-col :span="18" :offset="3">
+          <div class="review-placeholder__image"></div>
+        </el-col>
+      </el-row>
+      <el-row class="curation-submitbtns">
+        <el-col :span="10" :offset="11">
+          <button-group
+            @next-stage="nextStageHandler"></button-group>
+        </el-col>
+      </el-row>
+    </div>
   </div>
 </template>
 
@@ -40,12 +55,10 @@ export default {
           console.log(err);
           alert('next stage moving failed')
         });
-      
     },
   },
 };
 </script>
 
-<style>
-
-</style>
+<style src="@/review-page.css"></style>
+<style src="@/width-wp.css"></style>

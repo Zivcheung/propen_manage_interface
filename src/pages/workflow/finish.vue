@@ -1,49 +1,59 @@
 <template>
   <div class="window-page-wp">
     <topnav></topnav>
-    <el-row>
-      <el-col :span="18" :offset="3">
-        <step
-          :active="4"></step>
-      </el-col>
-    </el-row>
-    <el-row>
-      <el-col :span="6" :offset="5">
-        <el-form :model="finishInfo">
-          <el-form-item label="Exhibition Schedule">
-            <el-date-picker
-            v-model="finishInfo.schedule"
-            value-format="yyyy-M-d"
-            type="daterange"
-            range-separator="To"
-            start-placeholde="Start Date"
-            end-placeholde="End Date">
-            </el-date-picker>
-          </el-form-item>
-          <el-form-item label="Active Archive Duration">
-            <el-input
-              v-model="finishInfo.archiveDuration[0]"></el-input>
-            M
-            <el-input
-              v-model="finishInfo.archiveDuration[1]"></el-input>
-            Y
-          </el-form-item>
-          <el-form-item label="Copyright">
-            <el-input></el-input>
-          </el-form-item>
-        </el-form>
-      </el-col>
-      <el-col :span="6" :offset="2">
-      </el-col>
-    </el-row>
-    <el-row>
-      <el-col :span="10" :offset="11">
-        <button-group
-          @next-stage="nextStageHandler"
-          @save="saveHandler"
-          :last-step="true"></button-group>
-      </el-col>
-    </el-row>
+    <div class="width-wp">
+      <el-row class="breadcrumb">
+        <el-col :span="18" :offset="3">
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item>Curation</el-breadcrumb-item>
+            <el-breadcrumb-item>Constructing</el-breadcrumb-item>
+          </el-breadcrumb>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="18" :offset="3">
+          <step
+            :active="4"></step>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="6" :offset="5">
+          <el-form :model="finishInfo">
+            <el-form-item label="Exhibition Schedule">
+              <el-date-picker
+              v-model="finishInfo.schedule"
+              value-format="yyyy-M-d"
+              type="daterange"
+              range-separator="To"
+              start-placeholde="Start Date"
+              end-placeholde="End Date">
+              </el-date-picker>
+            </el-form-item>
+            <el-form-item label="Active Archive Duration">
+              <el-input
+                v-model="finishInfo.archiveDuration[0]"></el-input>
+              M
+              <el-input
+                v-model="finishInfo.archiveDuration[1]"></el-input>
+              Y
+            </el-form-item>
+            <el-form-item label="Copyright">
+              <el-input></el-input>
+            </el-form-item>
+          </el-form>
+        </el-col>
+        <el-col :span="6" :offset="2">
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="10" :offset="11">
+          <button-group
+            @next-stage="nextStageHandler"
+            @save="saveHandler"
+            :last-step="true"></button-group>
+        </el-col>
+      </el-row>
+    </div>
   </div>
 </template>
 

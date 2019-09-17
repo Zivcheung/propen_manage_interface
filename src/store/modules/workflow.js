@@ -18,6 +18,7 @@ const state = {
       // {
       //   sectionName: String,
       //   pageNumber: Number,
+      //   pageName : String.
       //   pageId: uuid,     todo: it need tobe repalced with ObjectId by mongodb
       //   illustrations: [String],
       //   description: String,
@@ -158,6 +159,7 @@ const mutations = {
     const pageObject = {
       sectionName: section,
       pageNumber: newPageNumber + 1,
+      pageName: '',
       pageId: uuid.v4(),
       illustrations: [],
       description: '',
@@ -188,6 +190,7 @@ const mutations = {
         curProject.pages.push({
           sectionName,
           pageNumber: 1,
+          pageName: '',
           pageId: uuid.v4(),
           illustrations: [],
           description: '',

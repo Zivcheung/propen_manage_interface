@@ -1,44 +1,54 @@
 <template>
   <div class="createpage">
     <topnav></topnav>
-    <el-row>
-      <el-col :span="18" :offset="3">
-        <step :active="0"></step>
-      </el-col>
-    </el-row>
-    <el-row>
-      <el-col :span="4" :offset="3">
-        <div class="createpage__input-cluster">
-          <el-form label-position="top">
-            <el-form-item label="Project Name">
-              <el-input v-model="x_title"></el-input>
-            </el-form-item>
-            <el-form-item label="Author Type">
-              <el-radio-group v-model="x_authorType">
-                <el-radio label="solo" >Solo</el-radio>
-                <el-radio label="team" >Team</el-radio>
-              </el-radio-group>
-            </el-form-item>
-            <el-form-item label="Author(s)">
-              <el-select
-                v-model="x_authors"
-                multiple
-                :multiple-limit="x_authorType == 'team' ? 20 : 1"
-                filterable
-                allow-create
-                default-first-option
-                placeholder="Add designer or team members">
-              </el-select>
-            </el-form-item>
-          </el-form>
-        </div>
-      </el-col>
-    </el-row>
-    <el-row>
-      <el-col :span="20" :offset="1">
-        <submit-btn-group @save="saveHandler" @next-stage="saveAndNextHandler"></submit-btn-group>
-      </el-col>
-    </el-row>
+    <div class="width-wp">
+      <el-row class="breadcrumb">
+        <el-col :span="18" :offset="3">
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item>Curation</el-breadcrumb-item>
+            <el-breadcrumb-item>Create</el-breadcrumb-item>
+          </el-breadcrumb>
+        </el-col>
+      </el-row>
+      <el-row class="curation-step">
+        <el-col :span="18" :offset="3">
+          <step :active="0"></step>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="4" :offset="3">
+          <div class="createpage__input-cluster">
+            <el-form label-position="top">
+              <el-form-item label="Project Name">
+                <el-input v-model="x_title"></el-input>
+              </el-form-item>
+              <el-form-item label="Author Type">
+                <el-radio-group v-model="x_authorType">
+                  <el-radio label="solo" >Solo</el-radio>
+                  <el-radio label="team" >Team</el-radio>
+                </el-radio-group>
+              </el-form-item>
+              <el-form-item label="Author(s)">
+                <el-select
+                  v-model="x_authors"
+                  multiple
+                  :multiple-limit="x_authorType == 'team' ? 20 : 1"
+                  filterable
+                  allow-create
+                  default-first-option
+                  placeholder="Add designer or team members">
+                </el-select>
+              </el-form-item>
+            </el-form>
+          </div>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="20" :offset="1">
+          <submit-btn-group @save="saveHandler" @next-stage="saveAndNextHandler"></submit-btn-group>
+        </el-col>
+      </el-row>
+    </div>
   </div>
 </template>
 
@@ -141,6 +151,5 @@ export default {
 };
 </script>
 
-<style>
+<style src="@/width-wp.css"></style>
 
-</style>
